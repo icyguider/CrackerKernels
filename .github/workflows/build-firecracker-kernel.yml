@@ -49,7 +49,23 @@ jobs:
           echo "Latest stable kernel: ${KERNEL_VERSION}"
           echo "Latest Firecracker config: ${CONFIG_NAME}"
 
+      - name: Check for an existing release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KERNEL_VERSION: ${{ steps.versions.outputs.kernel_version }}
+        run: |
+          TAG="v${KERNEL_VERSION}-firecracker"
+          if gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" --json assets --jq '.assets[].name' 2>/dev/null | grep -qx 'vmlinux'; then
+            echo "exists=true" >> "${GITHUB_OUTPUT}"
+            echo "Release ${TAG} already contains vmlinux; skipping build."
+          else
+            echo "exists=false" >> "${GITHUB_OUTPUT}"
+            echo "Release ${TAG} does not contain vmlinux; build will run."
+          fi
+
       - name: Download and extract kernel source
+        if: steps.release.outputs.exists != 'true'
         env:
           KERNEL_VERSION: ${{ steps.versions.outputs.kernel_version }}
         run: |
@@ -60,12 +76,14 @@ jobs:
           echo "KERNEL_DIR=linux-${KERNEL_VERSION}" >> "${GITHUB_ENV}"
 
       - name: Download latest Firecracker kernel config
+        if: steps.release.outputs.exists != 'true'
         env:
           CONFIG_NAME: ${{ steps.versions.outputs.config_name }}
         run: |
           curl -fsSL "https://raw.githubusercontent.com/firecracker-microvm/firecracker/main/resources/guest_configs/${CONFIG_NAME}" -o "${KERNEL_DIR}/.config"
 
       - name: Apply requested kernel options
+        if: steps.release.outputs.exists != 'true'
         run: |
           cat >> "${KERNEL_DIR}/.config" <<'EOF'
           CONFIG_MODULES=n
@@ -78,6 +96,7 @@ jobs:
           EOF
 
       - name: Configure kernel with olddefconfig
+        if: steps.release.outputs.exists != 'true'
         run: |
           make -C "${KERNEL_DIR}" olddefconfig
 
@@ -91,17 +110,20 @@ jobs:
           fi
 
       - name: Compile kernel
+        if: steps.release.outputs.exists != 'true'
         run: make -C "${KERNEL_DIR}" -j"$(nproc)" vmlinux
 
       - name: Upload vmlinux workflow artifact
-        uses: actions/upload-artifact@v4
+        if: steps.release.outputs.exists != 'true'
+        uses: actions/upload-artifact@v7
         with:
           name: vmlinux-${{ steps.versions.outputs.kernel_version }}
           path: ${{ env.KERNEL_DIR }}/vmlinux
           if-no-files-found: error
 
       - name: Publish GitHub release
-        uses: softprops/action-gh-release@v2
+        if: steps.release.outputs.exists != 'true'
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.versions.outputs.kernel_version }}-firecracker
           name: Linux ${{ steps.versions.outputs.kernel_version }} (Firecracker)
