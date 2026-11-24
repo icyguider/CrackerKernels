@@ -91,8 +91,13 @@ jobs:
           cp firecracker.config "${BUILD_DIR}/.config"
           cat >> "${BUILD_DIR}/.config" <<'EOF'
           CONFIG_MODULES=n
-          CONFIG_SERIO_I8042=y
+          # Options required for graceful shutdown via API
+          CONFIG_INPUT=y
+          CONFIG_INPUT_KEYBOARD=y
           CONFIG_KEYBOARD_ATKBD=y
+          CONFIG_SERIO=y
+          CONFIG_SERIO_I8042=y
+          # Options to enable podman rootful networking
           CONFIG_NFT_MASQ=y
           CONFIG_NFT_FIB=y
           CONFIG_NFT_FIB_INET=y
@@ -126,8 +131,12 @@ jobs:
           cp firecracker.config "${BUILD_DIR}/.config"
           cat >> "${BUILD_DIR}/.config" <<'EOF'
           CONFIG_MODULES=n
-          CONFIG_SERIO_I8042=y
+          # Options required for graceful shutdown via API
+          CONFIG_INPUT=y
+          CONFIG_INPUT_KEYBOARD=y
           CONFIG_KEYBOARD_ATKBD=y
+          CONFIG_SERIO=y
+          CONFIG_SERIO_I8042=y
           EOF
           make -C "${KERNEL_DIR}" O="${BUILD_DIR}" olddefconfig
 
@@ -174,16 +183,22 @@ jobs:
 
             ```text
             CONFIG_MODULES=n
-            CONFIG_SERIO_I8042=y
+            CONFIG_INPUT=y
+            CONFIG_INPUT_KEYBOARD=y
             CONFIG_KEYBOARD_ATKBD=y
+            CONFIG_SERIO=y
+            CONFIG_SERIO_I8042=y
             ```
 
             - `vmlinux-podman`: base Firecracker config with the following extra kernel options to support rootful podman:
 
             ```text
             CONFIG_MODULES=n
-            CONFIG_SERIO_I8042=y
+            CONFIG_INPUT=y
+            CONFIG_INPUT_KEYBOARD=y
             CONFIG_KEYBOARD_ATKBD=y
+            CONFIG_SERIO=y
+            CONFIG_SERIO_I8042=y
             CONFIG_NFT_MASQ=y
             CONFIG_NFT_FIB=y
             CONFIG_NFT_FIB_INET=y
