@@ -91,6 +91,8 @@ jobs:
           cp firecracker.config "${BUILD_DIR}/.config"
           cat >> "${BUILD_DIR}/.config" <<'EOF'
           CONFIG_MODULES=n
+          CONFIG_SERIO_I8042=y
+          CONFIG_KEYBOARD_ATKBD=y
           CONFIG_NFT_MASQ=y
           CONFIG_NFT_FIB=y
           CONFIG_NFT_FIB_INET=y
@@ -124,6 +126,8 @@ jobs:
           cp firecracker.config "${BUILD_DIR}/.config"
           cat >> "${BUILD_DIR}/.config" <<'EOF'
           CONFIG_MODULES=n
+          CONFIG_SERIO_I8042=y
+          CONFIG_KEYBOARD_ATKBD=y
           EOF
           make -C "${KERNEL_DIR}" O="${BUILD_DIR}" olddefconfig
 
@@ -166,11 +170,20 @@ jobs:
 
             Assets:
 
-            - `vmlinux`: base Firecracker config with only `CONFIG_MODULES=n` applied before `make olddefconfig`.
-            - `vmlinux-podman`: base Firecracker config with `CONFIG_MODULES=n` and the following options applied before `make olddefconfig`:
+            - `vmlinux`: base Firecracker config with the following extra kernel options:
 
             ```text
             CONFIG_MODULES=n
+            CONFIG_SERIO_I8042=y
+            CONFIG_KEYBOARD_ATKBD=y
+            ```
+
+            - `vmlinux-podman`: base Firecracker config with the following extra kernel options to support rootful podman:
+
+            ```text
+            CONFIG_MODULES=n
+            CONFIG_SERIO_I8042=y
+            CONFIG_KEYBOARD_ATKBD=y
             CONFIG_NFT_MASQ=y
             CONFIG_NFT_FIB=y
             CONFIG_NFT_FIB_INET=y
